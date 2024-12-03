@@ -1,201 +1,174 @@
-HAVE_FILE_LOGGER=1
-NEED_CXX_LINKER?=0
-NEED_GOLD_LINKER?=0
-MISSING_DECLS   =0
+#########################
+## Toolchain variables ##
+#########################
 
-ifneq ($(C90_BUILD),)
-   C89_BUILD=1
-endif
+# Default toolchain directory
+#TOOLCHAIN_DIR=/opt/miyoo
+TOOLCHAIN_DIR=/home/jeff/buildroot/output/host
+#/home/jeff/buildroot/output/host/arm-miyoo-linux-uclibcgnueabi/sysroot/usr/bin
 
-include config.mk
+# All toolchain-related variables may be
+# overridden via the command line
 
-# Put your favorite compile flags in this file, if you want different defaults than upstream.
-# Do not attempt to create that file upstream.
-# (It'd be better to put this comment in that file, but .gitignore doesn't work on files that exist in the repo.)
--include Makefile.local
-
-ifeq ($(HAVE_ANGLE), 1)
-TARGET = retroarch_angle
+ifdef GCW0_CC
+CC                    = $(GCW0_CC)
 else
-TARGET = retroarch
+CC                    = $(TOOLCHAIN_DIR)/usr/bin/arm-linux-gcc
 endif
+
+ifdef GCW0_CXX
+CXX                   = $(GCW0_CXX)
+else
+CXX                   = $(TOOLCHAIN_DIR)/usr/bin/arm-linux-g++
+endif
+
+ifdef GCW0_STRIP
+STRIP                 = $(GCW0_STRIP)
+else
+STRIP                 = $(TOOLCHAIN_DIR)/usr/bin/arm-linux-strip
+endif
+
+GCW0_SDL_CONFIG      ?= $(TOOLCHAIN_DIR)/usr/arm-miyoo-linux-uclibcgnueabi/sysroot/usr/bin/sdl-config
+GCW0_FREETYPE_CONFIG ?= $(TOOLCHAIN_DIR)/usr/arm-miyoo-linux-uclibcgnueabi/sysroot/usr/bin/freetype-config
+
+GCW0_INC_DIR         ?= $(TOOLCHAIN_DIR)/usr/arm-miyoo-linux-uclibcgnueabi/sysroot/usr/include
+GCW0_LIB_DIR         ?= $(TOOLCHAIN_DIR)/usr/arm-miyoo-linux-uclibcgnueabi/sysroot/usr/lib
+
+#########################
+#########################
+
+PACKAGE_NAME = retroarch
+
+DEBUG ?= 0
+
+MIYOO = 1
+DINGUX = 1
+HAVE_SCREENSHOTS = 1
+HAVE_REWIND = 1
+HAVE_7ZIP = 1
+HAVE_AL = 0
+HAVE_ALSA = 1
+HAVE_DSP_FILTER = 1
+HAVE_VIDEO_FILTER = 1
+HAVE_STATIC_VIDEO_FILTERS = 1
+HAVE_STATIC_AUDIO_FILTERS = 1
+HAVE_FILTERS_BUILTIN	= 1
+HAVE_BUILTINMBEDTLS = 0
+HAVE_BUILTINZLIB = 1
+HAVE_C99 = 1
+HAVE_CC = 1
+HAVE_CC_RESAMPLER = 1
+HAVE_CHD = 1
+HAVE_COMMAND = 0
+HAVE_CXX = 1
+HAVE_DR_MP3 = 1
+HAVE_DYNAMIC = 1
+HAVE_EGL = 0
+HAVE_FREETYPE = 0
+HAVE_GDI = 1
+HAVE_GETADDRINFO = 0
+HAVE_GETOPT_LONG = 1
+HAVE_GLSL = 0
+HAVE_HID = 0
+HAVE_IBXM = 1
+HAVE_IMAGEVIEWER = 0
+HAVE_LANGEXTRA = 0
+HAVE_LIBRETRODB = 1
+HAVE_MENU = 1
+HAVE_MENU_COMMON = 1
+HAVE_GFX_WIDGETS = 0
+HAVE_MMAP = 1
+HAVE_OPENDINGUX_FBDEV = 0
+HAVE_OPENGL = 0
+HAVE_OPENGL1 = 0
+HAVE_OPENGLES = 0
+HAVE_OPENGLES3 = 0
+HAVE_OPENGL_CORE = 0
+HAVE_OPENSSL = 0
+HAVE_OVERLAY = 0
+HAVE_RBMP = 1
+HAVE_RJPEG = 1
+HAVE_RPILED = 0
+HAVE_RPNG = 1
+HAVE_RUNAHEAD = 0
+HAVE_SDL_DINGUX = 1
+HAVE_SHADERPIPELINE = 0
+HAVE_STB_FONT = 0
+HAVE_STB_IMAGE = 0
+HAVE_STB_VORBIS = 0
+HAVE_STDIN_CMD = 0
+HAVE_STRCASESTR = 1
+HAVE_THREADS = 1
+HAVE_UDEV = 0
+HAVE_RGUI = 1
+HAVE_MATERIALUI = 0
+HAVE_XMB = 0
+HAVE_OZONE = 0
+HAVE_ZLIB = 1
+HAVE_CONFIGFILE = 1
+HAVE_PATCH = 1
+HAVE_XDELTA = 0 # Disabled until we figure out how to include <lzma.h>
+HAVE_CHEATS = 1
+HAVE_CHEEVOS = 0
+HAVE_LIBSHAKE = 0
+HAVE_CORE_INFO_CACHE = 1
+#HAVE_TINYALSA = 1
+HAVE_NEAREST_RESAMPLER = 1
+
+OS = Linux
+TARGET = retroarch
 
 OBJ :=
-LIBS :=
-DEF_FLAGS := -I.
+LINK := $(CXX)
+DEF_FLAGS := -march=armv5te -mtune=arm926ej-s -ffast-math -fomit-frame-pointer
+DEF_FLAGS += -ffunction-sections -fdata-sections
+DEF_FLAGS += -I. -Ideps -Ideps/stb -DMIYOO=1 -DDINGUX -MMD
+DEF_FLAGS += -Wall -Wno-unused-variable -flto
+DEF_FLAGS += -std=gnu99 -D_GNU_SOURCE
+LIBS := -ldl -lz -lrt -pthread -lasound
+CFLAGS :=
+CXXFLAGS := -fno-exceptions -fno-rtti -std=c++11 -D__STDC_CONSTANT_MACROS
 ASFLAGS :=
-DEFINES := -DHAVE_CONFIG_H -DRARCH_INTERNAL -D_FILE_OFFSET_BITS=64
-DEFINES += -DGLOBAL_CONFIG_DIR='"$(GLOBAL_CONFIG_DIR)"'
-DEFINES += -DASSETS_DIR='"$(DESTDIR)$(ASSETS_DIR)"'
-DEFINES += -DFILTERS_DIR='"$(DESTDIR)$(FILTERS_DIR)"'
-DEFINES += -DCORE_INFO_DIR='"$(DESTDIR)$(CORE_INFO_DIR)"'
+LDFLAGS := -Wl,--gc-sections
+INCLUDE_DIRS = -I$(GCW0_INC_DIR)
+LIBRARY_DIRS = -L$(GCW0_LIB_DIR)
+DEFINES := -DRARCH_INTERNAL -D_FILE_OFFSET_BITS=64 -UHAVE_STATIC_DUMMY
+DEFINES += -DHAVE_C99=1 -DHAVE_CXX=1
+DEFINES += -DHAVE_GETOPT_LONG=1 -DHAVE_STRCASESTR=1 -DHAVE_DYNAMIC=1
+DEFINES += -DHAVE_FILTERS_BUILTIN -DHAVE_ALSA
+
+SDL_DINGUX_CFLAGS := $(shell $(GCW0_SDL_CONFIG) --cflags)
+SDL_DINGUX_LIBS := $(shell $(GCW0_SDL_CONFIG) --libs)
+FREETYPE_CFLAGS := $(shell $(GCW0_FREETYPE_CONFIG) --cflags)
+FREETYPE_LIBS := $(shell $(GCW0_FREETYPE_CONFIG) --libs)
+MMAP_LIBS = -lc
 
 OBJDIR_BASE := obj-unix
 
-ifeq ($(NEED_GOLD_LINKER), 1)
-   LDFLAGS += -fuse-ld=gold
-endif
-
 ifeq ($(DEBUG), 1)
    OBJDIR := $(OBJDIR_BASE)/debug
-   CFLAGS ?= -O0 -g
-   CXXFLAGS ?= -O0 -g
-   DEFINES += -DDEBUG -D_DEBUG
+   DEF_FLAGS += -O0 -g -DDEBUG -D_DEBUG
 else
    OBJDIR := $(OBJDIR_BASE)/release
-   CFLAGS ?= -O3
-   CXXFLAGS ?= -O3
-   DEF_FLAGS += -ffast-math
-endif
-
-DEF_FLAGS += -Wall -Wsign-compare
-
-ifneq ($(findstring BSD,$(OS)),)
-   DEF_FLAGS += -DBSD
-   LDFLAGS += -L/usr/local/lib
-   UDEV_CFLAGS += -I/usr/local/include/libepoll-shim
-   UDEV_LIBS += -lepoll-shim
-endif
-
-ifneq ($(findstring DOS,$(OS)),)
-   DEF_FLAGS += -march=i386
-   LDFLAGS += -lemu
-endif
-
-ifneq ($(findstring FPGA,$(OS)),)
-   DEFINES += -DHAVE_FPGA
-endif
-
-ifneq ($(findstring Win32,$(OS)),)
-   LDFLAGS += -static-libgcc -lwinmm -limm32
+   DEF_FLAGS += -O2 -DNDEBUG
 endif
 
 include Makefile.common
 
-ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang"),1)
-   DEF_FLAGS += -Wno-invalid-source-encoding -Wno-incompatible-ms-struct
-endif
-
-ifeq ($(shell $(CC) -v 2>&1 | grep -c "tcc"),1)
-   MD = -MD
-else
-   MD = -MMD
-endif
+DEF_FLAGS += $(INCLUDE_DIRS)
+LDFLAGS += $(CFLAGS) $(CXXFLAGS) $(DEF_FLAGS)
+CFLAGS += $(DEF_FLAGS)
+CXXFLAGS += $(DEF_FLAGS)
 
 HEADERS = $(wildcard */*/*.h) $(wildcard */*.h) $(wildcard *.h)
 
-ifeq ($(MISSING_DECLS), 1)
-   DEF_FLAGS += -Werror=missing-declarations
-endif
-
-ifeq ($(HAVE_DYLIB), 1)
-   LIBS += $(DYLIB_LIB)
-endif
-
-ifeq ($(HAVE_DYNAMIC), 1)
-   LIBS += $(DYLIB_LIB)
-else
-   LIBS += $(libretro)
-endif
-
-ifneq ($(V),1)
-   Q := @
-endif
-
-ifeq ($(HAVE_DRMINGW), 1)
-   DEF_FLAGS += -DHAVE_DRMINGW
-   LDFLAGS += $(DRMINGW_LIBS)
-endif
-
-ifneq ($(findstring Win32,$(OS)),)
-   LDFLAGS += -mwindows
-endif
-
-ifneq ($(CXX_BUILD), 1)
-   ifneq ($(C89_BUILD),)
-      CFLAGS += -std=c89 -ansi -pedantic -Werror=pedantic -Wno-long-long -Werror=declaration-after-statement
-   else ifeq ($(HAVE_C99), 1)
-      CFLAGS += $(C99_CFLAGS)
-   endif
-
-   CFLAGS += -D_GNU_SOURCE
-endif
-
-DEF_FLAGS += $(INCLUDE_DIRS) -Ideps -Ideps/stb
-
-CFLAGS += $(DEF_FLAGS)
-CXXFLAGS += $(DEF_FLAGS) -D__STDC_CONSTANT_MACROS
-OBJCFLAGS :=  $(CFLAGS) -D__STDC_CONSTANT_MACROS
-
-ifeq ($(HAVE_CXX), 1)
-   ifeq ($(CXX_BUILD), 1)
-      LINK = $(CXX)
-      CFLAGS   := $(CXXFLAGS) -xc++
-      CFLAGS   += -DCXX_BUILD
-      CXXFLAGS += -DCXX_BUILD
-   else ifeq ($(NEED_CXX_LINKER),1)
-      LINK = $(CXX)
-   else
-      LINK = $(CC)
-   endif
-else
-   LINK = $(CC)
-endif
+Q := @
 
 RARCH_OBJ := $(addprefix $(OBJDIR)/,$(OBJ))
 
-ifneq ($(X86),)
-   CFLAGS += -m32
-   CXXFLAGS += -m32
-   LDFLAGS += -m32
-endif
+all: $(TARGET)
 
-ifneq ($(SANITIZER),)
-   CFLAGS   := -fsanitize=$(SANITIZER) $(CFLAGS)
-   CXXFLAGS := -fsanitize=$(SANITIZER) $(CXXFLAGS)
-   LDFLAGS  := -fsanitize=$(SANITIZER) $(LDFLAGS)
-endif
-
-ifneq ($(findstring $(GPERFTOOLS),profiler),)
-   LIBS += -lprofiler
-endif
-ifneq ($(findstring $(GPERFTOOLS),tcmalloc),)
-   LIBS += -ltcmalloc
-endif
-
-# Qt MOC generation, required for QObject-derived classes
-ifneq ($(MOC_HEADERS),)
-    # prefix moc_ to base filename of paths and change extension from h to cpp, so a/b/foo.h becomes a/b/moc_foo.cpp
-    MOC_SRC := $(join $(addsuffix moc_,$(addprefix $(OBJDIR)/,$(dir $(MOC_HEADERS)))), $(notdir $(MOC_HEADERS:.h=.cpp)))
-    MOC_OBJ := $(patsubst %.cpp,%.o,$(MOC_SRC))
-    RARCH_OBJ += $(MOC_OBJ)
-endif
-
-all: $(TARGET) config.mk
-
-$(MOC_SRC):
-	@$(if $(Q), $(shell echo echo MOC $<),)
-	$(eval MOC_TMP := $(patsubst %.h,%_moc.cpp,$@))
-	$(Q)QT_SELECT=$(QT_VERSION) $(MOC) -o $(MOC_TMP) $<
-
-$(foreach x,$(join $(addsuffix :,$(MOC_SRC)),$(MOC_HEADERS)),$(eval $x))
-
-$(MOC_OBJ):
-	@$(if $(Q), $(shell echo echo CXX $<),)
-	$(Q)$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -c -o $@ $<
-
-$(foreach x,$(join $(addsuffix :,$(MOC_OBJ)),$(MOC_SRC)),$(eval $x))
-
-ifeq ($(MAKECMDGOALS),clean)
-config.mk:
-else
 -include $(RARCH_OBJ:.o=.d)
-ifeq ($(HAVE_CONFIG_MK),)
-config.mk: configure qb/*
-	@echo "config.mk is outdated or non-existing. Run ./configure again."
-	@exit 1
-endif
-endif
 
 SYMBOL_MAP := -Wl,-Map=output.map
 
@@ -203,12 +176,16 @@ $(TARGET): $(RARCH_OBJ)
 	@$(if $(Q), $(shell echo echo LD $@),)
 	$(Q)$(LINK) -o $@ $(RARCH_OBJ) $(LIBS) $(LDFLAGS) $(LIBRARY_DIRS)
 
-$(OBJDIR)/%.o: %.c config.h config.mk
+ifeq ($(STRIP_BIN),1)
+	$(STRIP) --strip-unneeded $(TARGET)
+endif
+
+$(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	@$(if $(Q), $(shell echo echo CC $<),)
-	$(Q)$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFINES) $(MD) -c -o $@ $<
+	$(Q)$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-$(OBJDIR)/%.o: %.cpp config.h config.mk
+$(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@$(if $(Q), $(shell echo echo CXX $<),)
 	$(Q)$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -c -o $@ $<
@@ -218,78 +195,17 @@ $(OBJDIR)/%.o: %.m
 	@$(if $(Q), $(shell echo echo OBJC $<),)
 	$(Q)$(CXX) $(OBJCFLAGS) $(DEFINES) -MMD -c -o $@ $<
 
-$(OBJDIR)/%.o: %.S config.h config.mk $(HEADERS)
+$(OBJDIR)/%.o: %.S $(HEADERS)
 	@mkdir -p $(dir $@)
 	@$(if $(Q), $(shell echo echo AS $<),)
 	$(Q)$(CC) $(CFLAGS) $(ASFLAGS) $(DEFINES) -c -o $@ $<
-
-$(OBJDIR)/%.o: %.rc $(HEADERS)
-	@mkdir -p $(dir $@)
-	@$(if $(Q), $(shell echo echo WINDRES $<),)
-	$(Q)$(WINDRES) $(DEFINES) -o $@ $<
-
-install: $(TARGET)
-	mkdir -p $(DESTDIR)$(BIN_DIR) 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(GLOBAL_CONFIG_DIR) 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(DATA_DIR)/applications 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(DATA_DIR)/metainfo 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(DOC_DIR) 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(MAN_DIR)/man6 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(DATA_DIR)/pixmaps 2>/dev/null || /bin/true
-	cp $(TARGET) $(DESTDIR)$(BIN_DIR)
-	cp tools/cg2glsl.py $(DESTDIR)$(BIN_DIR)/retroarch-cg2glsl
-	cp retroarch.cfg $(DESTDIR)$(GLOBAL_CONFIG_DIR)
-	cp com.libretro.RetroArch.metainfo.xml $(DESTDIR)$(DATA_DIR)/metainfo
-	cp com.libretro.RetroArch.desktop $(DESTDIR)$(DATA_DIR)/applications
-	cp docs/retroarch.6 $(DESTDIR)$(MAN_DIR)/man6
-	cp docs/retroarch-cg2glsl.6 $(DESTDIR)$(MAN_DIR)/man6
-	cp media/com.libretro.RetroArch.svg $(DESTDIR)$(DATA_DIR)/pixmaps
-	cp COPYING $(DESTDIR)$(DOC_DIR)
-	cp README.md $(DESTDIR)$(DOC_DIR)
-	chmod 755 $(DESTDIR)$(BIN_DIR)/$(TARGET)
-	chmod 755 $(DESTDIR)$(BIN_DIR)/retroarch-cg2glsl
-	chmod 644 $(DESTDIR)$(GLOBAL_CONFIG_DIR)/retroarch.cfg
-	chmod 644 $(DESTDIR)$(DATA_DIR)/applications/com.libretro.RetroArch.desktop
-	chmod 644 $(DESTDIR)$(DATA_DIR)/metainfo/com.libretro.RetroArch.metainfo.xml
-	chmod 644 $(DESTDIR)$(MAN_DIR)/man6/retroarch.6
-	chmod 644 $(DESTDIR)$(MAN_DIR)/man6/retroarch-cg2glsl.6
-	chmod 644 $(DESTDIR)$(DATA_DIR)/pixmaps/com.libretro.RetroArch.svg
-	@if test -d media/assets && test $(HAVE_ASSETS); then \
-		echo "Installing media assets..."; \
-		mkdir -p $(DESTDIR)$(ASSETS_DIR)/assets; \
-		if test $(HAVE_MATERIALUI) = 1; then \
-			cp -r media/assets/glui/ $(DESTDIR)$(ASSETS_DIR)/assets; \
-		fi; \
-		if test $(HAVE_XMB) = 1; then \
-			cp -r media/assets/xmb/ $(DESTDIR)$(ASSETS_DIR)/assets; \
-		fi; \
-		if test $(HAVE_OZONE) = 1; then \
-			cp -r media/assets/ozone/ $(DESTDIR)$(ASSETS_DIR)/assets; \
-		fi; \
-		cp media/assets/COPYING $(DESTDIR)$(DOC_DIR)/COPYING.assets; \
-		echo "Asset copying done."; \
-	fi
-
-uninstall:
-	rm -f $(DESTDIR)$(BIN_DIR)/$(TARGET)
-	rm -f $(DESTDIR)$(BIN_DIR)/retroarch-cg2glsl
-	rm -f $(DESTDIR)$(GLOBAL_CONFIG_DIR)/retroarch.cfg
-	rm -f $(DESTDIR)$(DATA_DIR)/applications/com.libretro.RetroArch.desktop
-	rm -f $(DESTDIR)$(DATA_DIR)/metainfo/com.libretro.RetroArch.metainfo.xml
-	rm -f $(DESTDIR)$(DATA_DIR)/pixmaps/com.libretro.RetroArch.svg
-	rm -f $(DESTDIR)$(DOC_DIR)/COPYING
-	rm -f $(DESTDIR)$(DOC_DIR)/COPYING.assets
-	rm -f $(DESTDIR)$(DOC_DIR)/README.md
-	rm -f $(DESTDIR)$(MAN_DIR)/man6/retroarch.6
-	rm -f $(DESTDIR)$(MAN_DIR)/man6/retroarch-cg2glsl.6
-	rm -rf $(DESTDIR)$(ASSETS_DIR)
 
 clean:
 	rm -rf $(OBJDIR_BASE)
 	rm -f $(TARGET)
 	rm -f *.d
 
-.PHONY: all install uninstall clean
+.PHONY: all clean
 
 print-%:
 	@echo '$*=$($*)'
