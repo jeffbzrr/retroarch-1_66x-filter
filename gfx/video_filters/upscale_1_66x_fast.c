@@ -86,10 +86,8 @@ static void upscale_1_66x_fast_generic_output(void *data,
       unsigned *out_width, unsigned *out_height,
       unsigned width, unsigned height)
 {
-   //*out_width  = width  + (width  >> 1);
-   //*out_height = height + (height >> 1);
-   *out_width  = 265; //necessário deixar implícito, mais ou menos isso
-   *out_height = 240;
+      *out_width  = ((int)(width/3))*5;
+      *out_height = ((int)(height/3))*5;
 }
 
 static void upscale_1_66x_fast_generic_destroy(void *data)
